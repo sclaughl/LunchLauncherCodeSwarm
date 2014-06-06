@@ -12,9 +12,9 @@ namespace LunchLauncher
 
         public VoteTracker()
         {
-            InitializeConstraints();
             _userVotes = new Dictionary<User, int>();
             _restaurantVotes = new Dictionary<Restaurant, int>();
+            InitializeConstraints();
         }
 
         private void InitializeConstraints()
@@ -32,22 +32,51 @@ namespace LunchLauncher
 
         public void LogVote(User user, Restaurant restaurant)
         {
-            var constraints = GetConstraintsForCurrentState();
-            foreach (var constraint in constraints)
-            {
-                var isValid = constraint.Validate(user, restaurant);
-                if (!isValid) throw new ConstraintViolationException();
-            }
+            ValidateConstraints(user, restaurant);
+            LogVoteForUser(user);
+            LogVoteForRestaurant(restaurant);
+        }
 
+        private void LogVoteForUser(User user)
+        {
             if (_userVotes.ContainsKey(user))
                 _userVotes[user] += 1;
             else
                 _userVotes[user] = 1;
+        }
 
+        private void LogVoteForRestaurant(Restaurant restaurant)
+        {
             if (_restaurantVotes.ContainsKey(restaurant))
                 _restaurantVotes[restaurant] += 1;
             else
                 _restaurantVotes[restaurant] = 1;
+        }
+
+        public int VotesForUser(User u)
+        {
+            if (_userVotes.ContainsKey(u))
+                return _userVotes[u];
+
+            return 0;
+        }
+
+        public int VotesForRestaurant(Restaurant restaurant)
+        {
+            return _restaurantVotes[restaurant];
+        }
+
+        public void SetConstraints(State state, BaseStateConstraint constraints)
+        {
+            _stateConstraints[state].Add(constraints);
+        }
+
+        private void ValidateConstraints(User user, Restaurant restaurant)
+        {
+            if (GetConstraintsForCurrentState()
+                    .Select(constraint => constraint.Validate(user, restaurant))
+                    .Any(isValid => !isValid))
+                throw new ConstraintViolationException();
         }
 
         private IEnumerable<BaseStateConstraint> GetConstraintsForCurrentState()
@@ -58,14 +87,6 @@ namespace LunchLauncher
                                         null;
         }
 
-        public int VotesForUser(User u)
-        {
-            if (_userVotes.ContainsKey(u)) 
-                return _userVotes[u];
-
-            return 0;
-        }
-
         public void CloseNominationPhase()
         {
             TransitionToSelectionPhase();
@@ -74,16 +95,6 @@ namespace LunchLauncher
         private void TransitionToSelectionPhase()
         {
             CurrentState = State.SelectionPhase;
-        }
-
-        public void SetConstraints(State state, BaseStateConstraint constraints)
-        {
-            _stateConstraints[state].Add(constraints);
-        }
-
-        public int VotesForRestaurant(Restaurant restaurant)
-        {
-            return _restaurantVotes[restaurant];
         }
     }
 }
