@@ -1,6 +1,6 @@
 ﻿namespace LunchLauncher
 {
-    public class RoundConstraints
+    public class StateConstraints
     {
         public int MaxVotesPerUser { get; set; }
     }

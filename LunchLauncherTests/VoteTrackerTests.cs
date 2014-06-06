@@ -43,7 +43,7 @@ namespace UnitTestProject1
         }
 
         [TestMethod]
-        public void it_keeps_track_of_votes_per_restaurant_for_multiples()
+        public void it_keeps_track_of_votes_when_many_are_logged()
         {
             var vt = new VoteTracker();
 
@@ -73,10 +73,44 @@ namespace UnitTestProject1
 
             Assert.AreEqual(5, vt.VotesForRestaurant(r1));
             Assert.AreEqual(3, vt.VotesForRestaurant(r2));
+
+            Assert.AreEqual(8, vt.TotalVotes);
         }
 
         [TestMethod]
-        public void it_allows_new_restaurants_during_round1()
+        [ExpectedException(typeof(UserExceededVotesException))]
+        public void it_has_states_that_constrain_max_votes_per_user()
+        {
+            var u = new User();
+            var r = new Restaurant();
+
+            var vt = new VoteTracker();
+            var constraints = new StateConstraints { MaxVotesPerUser = 6 };
+            vt.SetConstraints(State.NominationPhase, constraints);
+
+            for (var x = 0; x < 9; x++)
+                vt.LogVote(u, r);
+
+            Assert.Fail("exception not thrown");
+        }
+
+        [TestMethod]
+        public void it_is_in_Nomination_state_when_initialized()
+        {
+            var vt = new VoteTracker();
+            Assert.AreEqual(State.NominationPhase, vt.CurrentState);
+        }
+
+        [TestMethod]
+        public void it_transitions_to_Selection_state_when_Nomination_ends()
+        {
+            var vt = new VoteTracker();
+            vt.CloseNominationPhase();
+            Assert.AreEqual(State.SelectionPhase, vt.CurrentState);
+        }
+
+        [TestMethod]
+        public void it_allows_new_restaurants_during_Nomination_state()
         {
             var vt = new VoteTracker();
             vt.LogVote(new User(), new Restaurant());
@@ -85,49 +119,21 @@ namespace UnitTestProject1
 
         [TestMethod]
         [ExpectedException(typeof(InvalidRestaurantException))]
-        public void it_does_not_allow_votes_for_new_restaurants_during_round2()
+        public void it_does_not_allow_votes_for_new_restaurants_during_Selection_state()
         {
             var vt = new VoteTracker();
             vt.CloseNominationPhase();
+
+            Assert.AreEqual(State.SelectionPhase, vt.CurrentState);
+
             vt.LogVote(new User(), new Restaurant());
+            Assert.Fail("exception not thrown");
         }
 
         [TestMethod]
-        public void it_calculates_top_three_restaurants_at_end_of_round1()
+        public void it_calculates_top_three_restaurants_at_end_of_Nomination_state()
         {
             Assert.Fail("implement me");
-        }
-
-        [TestMethod]
-        public void it_is_in_Round1_state_when_initialized()
-        {
-            var vt = new VoteTracker();
-            Assert.AreEqual(State.NominationPhase, vt.CurrentState);
-        }
-
-        [TestMethod]
-        public void it_transitions_to_Round2_when_Round1_ends()
-        {
-            var vt = new VoteTracker();
-            vt.CloseNominationPhase();
-            Assert.AreEqual(State.SelectionPhase, vt.CurrentState);
-        }
-
-        [TestMethod]
-        [ExpectedException(typeof(UserExceededVotesException))]
-        public void it_has_rounds_that_enforce_max_votes_per_user()
-        {
-            var u = new User();
-            var r = new Restaurant();
-
-            var vt = new VoteTracker();
-            var round1Constraints = new RoundConstraints { MaxVotesPerUser = 6 };
-            vt.SetConstraints(State.NominationPhase, round1Constraints);
-
-            for (var x = 0; x < 9; x++)
-                vt.LogVote(u, r);
-
-            Assert.Fail("exception not thrown");
         }
     }
 }

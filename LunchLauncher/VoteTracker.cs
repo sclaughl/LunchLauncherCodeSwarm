@@ -8,12 +8,12 @@ namespace LunchLauncher
     public class VoteTracker
     {
         private readonly IDictionary<User, int> _userVotes;
-        private readonly IDictionary<State, RoundConstraints> _stateConstraints;
+        private readonly IDictionary<State, StateConstraints> _stateConstraints;
         private readonly IDictionary<Restaurant, int> _restaurantVotes;
 
         public VoteTracker()
         {
-            _stateConstraints = new Dictionary<State, RoundConstraints>();
+            _stateConstraints = new Dictionary<State, StateConstraints>();
             _userVotes = new Dictionary<User, int>();
             _restaurantVotes = new Dictionary<Restaurant, int>();
         }
@@ -39,15 +39,15 @@ namespace LunchLauncher
                 _restaurantVotes[restaurant] = 1;
         }
 
-        private RoundConstraints GetConstraintsForCurrentState()
+        private StateConstraints GetConstraintsForCurrentState()
         {
-            RoundConstraints constraints;
+            StateConstraints constraints;
             return _stateConstraints.TryGetValue(CurrentState, out constraints) ?
                                         constraints :
                                         null;
         }
 
-        private void ValidateMaxVotesPerUserConstraint(User user, RoundConstraints constraints)
+        private void ValidateMaxVotesPerUserConstraint(User user, StateConstraints constraints)
         {
             if (user == null) throw new ArgumentNullException("user");
             if (constraints == null) throw new ArgumentNullException("constraints");
@@ -71,7 +71,7 @@ namespace LunchLauncher
             CurrentState = State.SelectionPhase;
         }
 
-        public void SetConstraints(State state, RoundConstraints constraints)
+        public void SetConstraints(State state, StateConstraints constraints)
         {
             _stateConstraints[state] = constraints;
         }
