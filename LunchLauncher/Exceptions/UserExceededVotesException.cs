@@ -2,7 +2,7 @@
 
 namespace LunchLauncher.Exceptions
 {
-    public class UserExceededVotesException : Exception
+    public class UserExceededVotesException : ConstraintViolationException
     {
     }
 }

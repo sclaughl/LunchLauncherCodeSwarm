@@ -1,8 +1,9 @@
 ﻿using LunchLauncher;
+using LunchLauncher.Constraints;
 using LunchLauncher.Exceptions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace UnitTestProject1
+namespace LunchLauncherTests
 {
     [TestClass]
     public class VoteTrackerTests
@@ -78,15 +79,16 @@ namespace UnitTestProject1
         }
 
         [TestMethod]
-        [ExpectedException(typeof(UserExceededVotesException))]
+        [ExpectedException(typeof(ConstraintViolationException))]
         public void it_has_states_that_constrain_max_votes_per_user()
         {
             var u = new User();
             var r = new Restaurant();
+            var MAX_VOTES_PER_USER = 5;
 
             var vt = new VoteTracker();
-            var constraints = new StateConstraints { MaxVotesPerUser = 6 };
-            vt.SetConstraints(State.NominationPhase, constraints);
+            var constraint = new MaxVotesPerUserConstraint(vt, MAX_VOTES_PER_USER);
+            vt.SetConstraints(State.NominationPhase, constraint);
 
             for (var x = 0; x < 9; x++)
                 vt.LogVote(u, r);
@@ -118,12 +120,14 @@ namespace UnitTestProject1
         }
 
         [TestMethod]
-        [ExpectedException(typeof(InvalidRestaurantException))]
+        [ExpectedException(typeof(ConstraintViolationException))]
         public void it_does_not_allow_votes_for_new_restaurants_during_Selection_state()
         {
             var vt = new VoteTracker();
-            vt.CloseNominationPhase();
+            var constraint = new NoNewRestaurantsConstraint(vt);
+            vt.SetConstraints(State.SelectionPhase, constraint);
 
+            vt.CloseNominationPhase();
             Assert.AreEqual(State.SelectionPhase, vt.CurrentState);
 
             vt.LogVote(new User(), new Restaurant());
