@@ -7,8 +7,8 @@ namespace LunchLauncher
     public class VoteTracker
     {
         private readonly IDictionary<User, int> _userVotes;
-        private IDictionary<State, IList<BaseStateConstraint>> _stateConstraints;
         private readonly IDictionary<Restaurant, int> _restaurantVotes;
+        private IDictionary<State, IList<BaseStateConstraint>> _stateConstraints;
 
         public VoteTracker()
         {
@@ -55,10 +55,7 @@ namespace LunchLauncher
 
         public int VotesForUser(User u)
         {
-            if (_userVotes.ContainsKey(u))
-                return _userVotes[u];
-
-            return 0;
+            return _userVotes.ContainsKey(u) ? _userVotes[u] : 0;
         }
 
         public int VotesForRestaurant(Restaurant restaurant)
@@ -87,14 +84,30 @@ namespace LunchLauncher
                                         null;
         }
 
-        public void CloseNominationPhase()
+        public IList<Restaurant> CloseNominationPhase()
         {
+            var sortedRestaurants = SortRestaurantsByVotesDesc();
             TransitionToSelectionPhase();
+            return sortedRestaurants.Take(3).ToList();
+        }
+
+        private IEnumerable<Restaurant> SortRestaurantsByVotesDesc()
+        {
+            return _restaurantVotes
+                            .OrderByDescending(rv => rv.Value)
+                            .Select(rv => rv.Key)
+                            .ToList();
         }
 
         private void TransitionToSelectionPhase()
         {
             CurrentState = State.SelectionPhase;
+
+            foreach (var u in _userVotes.Keys.ToList())
+                _userVotes[u] = 0;
+
+            foreach (var r in _restaurantVotes.Keys.ToList())
+                _restaurantVotes[r] = 0;
         }
     }
 }
