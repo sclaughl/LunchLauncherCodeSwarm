@@ -81,7 +81,7 @@ namespace LunchLauncher
             IList<BaseStateConstraint> constraints;
             return _stateConstraints.TryGetValue(CurrentState, out constraints) ?
                                         constraints :
-                                        null;
+                                        new List<BaseStateConstraint>();
         }
 
         public IList<Restaurant> CloseNominationPhase()
